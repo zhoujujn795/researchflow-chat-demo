@@ -8,6 +8,7 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 from main import (  # noqa: E402
     DifyResponseError,
+    build_initial_chat_payload,
     extract_chat_answer,
     extract_dify_error_message,
     validate_pdf_upload,
@@ -32,6 +33,22 @@ def test_validate_pdf_upload_accepts_pdf_filename():
 
 def test_validate_pdf_upload_rejects_non_pdf_filename():
     assert validate_pdf_upload("paper.docx", "application/pdf") == "只支持上传 PDF 文件。"
+
+
+def test_build_initial_chat_payload_includes_required_paper_files_input():
+    payload = build_initial_chat_payload(
+        upload_file_id="upload-123",
+        research_topic="PM2.5 趋势分析",
+        extract_metrics="RMSE、MAE",
+    )
+
+    assert payload["inputs"]["paper_files"] == [
+        {
+            "type": "document",
+            "transfer_method": "local_file",
+            "upload_file_id": "upload-123",
+        }
+    ]
 
 
 def test_extract_chat_answer_returns_answer_and_conversation_id():

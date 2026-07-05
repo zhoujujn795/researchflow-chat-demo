@@ -76,5 +76,5 @@ JSON body:
 - The frontend must never call Dify directly.
 - The Dify API key must only exist in backend `.env`.
 - The implementation uses Dify `/files/upload` and `/chat-messages`, not `/workflows/run`.
-- If your Dify start node defines a file variable such as `paper_file`, see the comment in `main.py` near `build_initial_chat_payload()`.
+- The initial chat payload maps the uploaded file to the Dify start-node file list variable `paper_files`. If your Dify variable name differs, update `build_initial_chat_payload()` in `main.py`.
 

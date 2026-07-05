@@ -183,7 +183,7 @@ PM2.5、PM10、R²、MAE、RMSE、Pearson 相关系数、特征重要性
 
 ### 文件上传失败
 
-确认上传的是 PDF 文件，并检查 Dify 应用是否支持文件输入。后端当前使用 `/files/upload` 后将 `upload_file_id` 放入 `/chat-messages` 的 `files` 数组。
+确认上传的是 PDF 文件，并检查 Dify 应用是否支持文件输入。后端当前先调用 `/files/upload`，再把 `upload_file_id` 同时放入 `/chat-messages` 的 `inputs.paper_files` 和顶层 `files` 数组。
 
 ### conversation_id 丢失
 

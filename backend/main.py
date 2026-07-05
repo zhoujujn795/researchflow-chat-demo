@@ -152,34 +152,31 @@ def call_dify_chat(payload: dict[str, Any]) -> dict[str, Any]:
     return response.json()
 
 
+def build_dify_file_descriptor(upload_file_id: str) -> dict[str, str]:
+    return {
+        "type": "document",
+        "transfer_method": "local_file",
+        "upload_file_id": upload_file_id,
+    }
+
+
 def build_initial_chat_payload(
     upload_file_id: str,
     research_topic: str,
     extract_metrics: str,
 ) -> dict[str, Any]:
+    file_descriptor = build_dify_file_descriptor(upload_file_id)
     return {
         "inputs": {
             "research_topic": research_topic,
             "extract_metrics": extract_metrics,
-            # If your Dify start node defines a file variable named paper_file
-            # instead of receiving files from the top-level files array, switch to:
-            # "paper_file": {
-            #     "type": "document",
-            #     "transfer_method": "local_file",
-            #     "upload_file_id": upload_file_id,
-            # }
+            "paper_files": [file_descriptor],
         },
         "query": "请分析我上传的科研论文 PDF，提取结构化指标，并生成科研分析报告。",
         "response_mode": "blocking",
         "conversation_id": "",
         "user": DIFY_USER,
-        "files": [
-            {
-                "type": "document",
-                "transfer_method": "local_file",
-                "upload_file_id": upload_file_id,
-            }
-        ],
+        "files": [file_descriptor],
     }
 
 
