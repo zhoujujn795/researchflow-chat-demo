@@ -13,6 +13,7 @@ import {
   UploadCloud
 } from 'lucide-vue-next'
 import { analyzePaper, sendChatMessage } from './api'
+import { normalizeApiErrorMessage, validateAnalyzeForm } from './formState'
 
 const STORAGE_KEY = 'researchflow_conversation_id'
 
@@ -66,13 +67,14 @@ async function startAnalyze() {
   errorMessage.value = ''
   copyState.value = '复制结果'
 
-  if (!paperFile.value) {
-    errorMessage.value = '请先选择一篇 PDF 论文。'
-    return
-  }
+  const validationError = validateAnalyzeForm({
+    paperFile: paperFile.value,
+    researchTopic: researchTopic.value,
+    extractMetrics: extractMetrics.value
+  })
 
-  if (!paperFile.value.name.toLowerCase().endsWith('.pdf')) {
-    errorMessage.value = '只支持上传 PDF 文件。'
+  if (validationError) {
+    errorMessage.value = validationError
     return
   }
 
@@ -87,7 +89,7 @@ async function startAnalyze() {
     })
     applyApiResult(data)
   } catch (error) {
-    errorMessage.value = error.message || '分析请求失败。'
+    errorMessage.value = normalizeApiErrorMessage(error.message)
   } finally {
     loading.value = false
   }
@@ -115,7 +117,7 @@ async function askFollowup() {
     applyApiResult(data)
     followup.value = ''
   } catch (error) {
-    errorMessage.value = error.message || '追问请求失败。'
+    errorMessage.value = normalizeApiErrorMessage(error.message || '追问请求失败。')
   } finally {
     chatting.value = false
   }
@@ -186,25 +188,55 @@ function clearSession() {
       <section class="workspace-grid">
         <aside class="panel input-panel">
           <div class="panel-heading">
-            <span>输入区</span>
-            <UploadCloud :size="20" />
+            <span>Dify 输入表单</span>
+            <span class="required-count">3 必填</span>
+          </div>
+
+          <div class="input-map" aria-label="Dify 输入字段映射">
+            <div class="map-row">
+              <code>paper_files</code>
+              <span>论文 PDF 文件</span>
+              <b>必填</b>
+            </div>
+            <div class="map-row">
+              <code>research_topic</code>
+              <span>研究主题</span>
+              <b>必填</b>
+            </div>
+            <div class="map-row">
+              <code>extract_metrics</code>
+              <span>提取指标</span>
+              <b>必填</b>
+            </div>
           </div>
 
           <label class="upload-zone">
             <input type="file" accept="application/pdf,.pdf" @change="onFileChange" />
+            <span class="field-label">
+              <code>paper_files</code>
+              <em>必填</em>
+            </span>
             <UploadCloud :size="34" />
-            <strong>{{ fileName || '选择科研论文 PDF' }}</strong>
-            <small>PDF only</small>
+            <strong>{{ fileName || '上传论文 PDF' }}</strong>
+            <small>对应 Dify 的文件列表变量</small>
           </label>
 
           <label class="field">
-            <span>研究主题</span>
-            <textarea v-model="researchTopic" rows="4"></textarea>
+            <span class="field-label">
+              <code>research_topic</code>
+              <em>必填</em>
+            </span>
+            <small>研究主题</small>
+            <textarea v-model="researchTopic" rows="4" placeholder="例如：城市空气质量 PM2.5 变化趋势与影响因素分析"></textarea>
           </label>
 
           <label class="field">
-            <span>希望提取的指标</span>
-            <textarea v-model="extractMetrics" rows="5"></textarea>
+            <span class="field-label">
+              <code>extract_metrics</code>
+              <em>必填</em>
+            </span>
+            <small>希望提取的指标</small>
+            <textarea v-model="extractMetrics" rows="5" placeholder="例如：PM2.5、PM10、R²、MAE、RMSE、Pearson 相关系数"></textarea>
           </label>
 
           <div class="button-row">
@@ -230,13 +262,14 @@ function clearSession() {
           </div>
 
           <div v-if="errorMessage" class="error-box">
-            {{ errorMessage }}
+            <strong>请求未完成</strong>
+            <span>{{ errorMessage }}</span>
           </div>
 
           <div v-if="loading" class="loading-state">
             <LoaderCircle class="spin" :size="34" />
             <strong>Dify 工作流处理中</strong>
-            <span>正在等待论文解析和科研报告生成</span>
+            <span>已提交 paper_files，正在等待报告返回</span>
           </div>
 
           <article v-else-if="answer" class="markdown-body" v-html="renderedAnswer"></article>
